@@ -11,7 +11,7 @@ Dialog {
                                            "Conversion failed")
     contentItem: Rectangle {
         implicitWidth: 400
-        implicitHeight: 150
+        implicitHeight: 250
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 40
@@ -29,6 +29,24 @@ Dialog {
                 color: Material.color(Material.BlueGrey)
             }
 
+            RowLayout {
+                Button {
+                    text: qsTr("Open output")
+                    onClicked: conversionModel.openOutput()
+                    highlighted: true
+                    Material.background: Material.Orange
+                    Layout.fillWidth: true
+                }
+
+                Button {
+                    text: qsTr("Open output folder")
+                    onClicked: conversionModel.openOutputFolder()
+                    highlighted: true
+                    Material.background: Material.Orange
+                    Layout.fillWidth: true
+                }
+            }
+
             Button {
                 text: qsTr("Ok!")
                 onClicked: messageDialog.close()
@@ -36,6 +54,7 @@ Dialog {
                 Material.background: Material.Orange
                 Layout.fillWidth: true
             }
+
         }
     }
 }

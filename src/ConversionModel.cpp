@@ -2,6 +2,9 @@
 
 #include "ConverterFactory.hpp"
 
+#include <QDesktopServices>
+#include <QUrl>
+
 ConversionModel::ConversionModel(QObject *parent) :
     QAbstractListModel(parent), m_conversions{ "TS => CSV", "CSV => TS",
                                                "TS => XLSX", "XLSX => TS",
@@ -39,10 +42,60 @@ void ConversionModel::setInput(const QString &value)
     deduceInputOutput();
 }
 
-void ConversionModel::setOutput(const QString &value)
+QString ConversionModel::setOutput(const QString &value)
 {
     m_output = value;
+    QString temp =
+        m_output.right(m_output.length() - 1 - m_output.lastIndexOf("/"));
+
+    if (!temp.contains(QRegExp("\\S+\\.\\S+"))) {
+        if (currentIndex == ConverterFactory::Ts2Xlsx) {
+            m_output += ".xlsx";
+        } else if (currentIndex == ConverterFactory::Ts2Csv) {
+            m_output += ".csv";
+        } else if (currentIndex != ConverterFactory::Dummy) {
+            m_output += ".ts";
+        }
+    }
+
     deduceInputOutput();
+    return m_output;
+}
+
+QStringList ConversionModel::getSaveFT()
+{
+    if (currentIndex == ConverterFactory::Csv2Ts ||
+        currentIndex == ConverterFactory::Xlsx2Ts) {
+        return QStringList({ "Translation files (*.ts)" });
+    }
+
+    if (currentIndex == ConverterFactory::Ts2Csv) {
+        return QStringList({ "CSV files (*.csv)" });
+    }
+
+    if (currentIndex == ConverterFactory::Ts2Xlsx) {
+        return QStringList({ "Excel files (*.xls, *.xlsx)" });
+    }
+
+    return QStringList({ "All files (*)" });
+}
+
+QStringList ConversionModel::getLoadFT()
+{
+    if (currentIndex == ConverterFactory::Ts2Csv ||
+        currentIndex == ConverterFactory::Ts2Xlsx) {
+        return QStringList({ "Translation files (*.ts)" });
+    }
+
+    if (currentIndex == ConverterFactory::Csv2Ts) {
+        return QStringList({ "CSV files (*.csv)" });
+    }
+
+    if (currentIndex == ConverterFactory::Xlsx2Ts) {
+        return QStringList({ "Excel files (*.xls, *.xlsx)" });
+    }
+
+    return QStringList({ "All files (*)" });
 }
 
 void ConversionModel::deduceInputOutput() noexcept
@@ -53,23 +106,44 @@ void ConversionModel::deduceInputOutput() noexcept
 
     if (m_input.endsWith(QStringLiteral(".ts"))) {
         if (m_output.endsWith(QStringLiteral(".csv"))) {
-            Q_EMIT setComboBoxIndex(ConverterFactory::Ts2Csv);
+            currentIndex = ConverterFactory::Ts2Csv;
         }
 
-        if (m_output.endsWith(QStringLiteral(".xls")) || m_output.endsWith(QStringLiteral(".xlsx"))) {
-            Q_EMIT setComboBoxIndex(ConverterFactory::Ts2Xlsx);
+        if (m_output.endsWith(QStringLiteral(".xls")) ||
+            m_output.endsWith(QStringLiteral(".xlsx"))) {
+            currentIndex = ConverterFactory::Ts2Xlsx;
         }
-    }
-
-    if (m_input.endsWith(QStringLiteral(".csv"))) {
+    } else if (m_input.endsWith(QStringLiteral(".csv"))) {
         if (m_output.endsWith(QStringLiteral(".ts"))) {
-            Q_EMIT setComboBoxIndex(ConverterFactory::Csv2Ts);
+            currentIndex = ConverterFactory::Csv2Ts;
+        }
+    } else if (m_input.endsWith(QStringLiteral(".xls")) ||
+               m_input.endsWith(QStringLiteral(".xlsx"))) {
+        if (m_output.endsWith(QStringLiteral(".ts"))) {
+            currentIndex = ConverterFactory::Xlsx2Ts;
         }
     }
 
-    if (m_input.endsWith(QStringLiteral(".xls")) || m_input.endsWith(QStringLiteral(".xlsx"))) {
-        if (m_output.endsWith(QStringLiteral(".ts"))) {
-            Q_EMIT setComboBoxIndex(ConverterFactory::Xlsx2Ts);
-        }
-    }
+    Q_EMIT setComboBoxIndex(currentIndex);
+}
+
+void ConversionModel::setIndex(const int &newIndex)
+{
+    currentIndex = newIndex;
+}
+
+void ConversionModel::openOutput()
+{
+    QString replaced = m_output;
+    replaced.replace(0, 7, "");
+    QDesktopServices::openUrl(QUrl::fromLocalFile(replaced));
+}
+
+void ConversionModel::openOutputFolder()
+{
+    QString replaced = m_output;
+    replaced.replace(0, 7, "");
+    int pos = replaced.lastIndexOf(QRegExp("/.*"));
+    replaced.replace(pos, replaced.length() - pos, "");
+    QDesktopServices::openUrl(QUrl::fromLocalFile(replaced));
 }

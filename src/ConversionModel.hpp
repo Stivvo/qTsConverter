@@ -16,9 +16,17 @@ class ConversionModel final : public QAbstractListModel
     QHash<int, QByteArray> roleNames() const override;
 
     Q_INVOKABLE void setInput(const QString &value);
-    Q_INVOKABLE void setOutput(const QString &value);
+    Q_INVOKABLE QString setOutput(const QString &value);
 
-Q_SIGNALS:
+    Q_INVOKABLE QStringList getLoadFT();
+    Q_INVOKABLE QStringList getSaveFT();
+
+    Q_INVOKABLE void setIndex(const int &newIndex);
+
+    Q_INVOKABLE void openOutput();
+    Q_INVOKABLE void openOutputFolder();
+
+  Q_SIGNALS:
     void setComboBoxIndex(int index);
 
   private:
@@ -27,4 +35,5 @@ Q_SIGNALS:
     QString m_output;
 
     void deduceInputOutput() noexcept;
+    int currentIndex = 4;
 };
